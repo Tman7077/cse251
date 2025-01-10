@@ -43,7 +43,6 @@ def draw_square(tur, x, y, side, color='black'):
         tur.forward(side)
         tur.right(90)
 
-
 def draw_circle(tur, x, y, radius, color='red'):
     """Draw Circle"""
     steps = 10
@@ -60,7 +59,6 @@ def draw_circle(tur, x, y, radius, color='red'):
         tur.forward(circumference / steps)
         tur.right(360 / steps)
 
-
 def draw_rectangle(tur, x, y, width, height, color='blue'):
     """Draw a rectangle"""
     tur.move(x, y)
@@ -75,7 +73,6 @@ def draw_rectangle(tur, x, y, width, height, color='blue'):
     tur.forward(height)
     tur.right(90)
 
-
 def draw_triangle(tur, x, y, side, color='green'):
     """Draw a triangle"""
     tur.move(x, y)
@@ -85,7 +82,6 @@ def draw_triangle(tur, x, y, side, color='green'):
         tur.forward(side)
         tur.left(120)
 
-
 def draw_coord_system(tur, x, y, size=300, color='black'):
     """Draw corrdinate lines"""
     tur.move(x, y)
@@ -94,33 +90,37 @@ def draw_coord_system(tur, x, y, size=300, color='black'):
         tur.backward(size)
         tur.left(90)
 
-def draw_squares(tur):
+def draw_squares(tur, lock=None):
     """Draw a group of squares"""
     for x in range(-300, 350, 200):
         for y in range(-300, 350, 200):
-            draw_square(tur, x - 50, y + 50, 100)
+            args = [tur, x - 50, y + 50, 100, "black"]
+            draw_shape(square, args, lock)
 
-
-def draw_circles(tur):
+def draw_circles(tur, lock=None):
     """Draw a group of circles"""
     for x in range(-300, 350, 200):
         for y in range(-300, 350, 200):
-            draw_circle(tur, x, y-2, 50)
+            args = [tur, x, y-2, 50, "red"]
+            draw_shape(circle, args, lock)
 
-
-def draw_triangles(tur):
+def draw_triangles(tur, lock=None):
     """Draw a group of triangles"""
     for x in range(-300, 350, 200):
         for y in range(-300, 350, 200):
-            draw_triangle(tur, x-30, y-30+10, 60)
+            args = [tur, x-30, y-30+10, 60, "blue"]
+            draw_shape(triangle, args, lock)
 
-
-def draw_rectangles(tur):
+def draw_rectangles(tur, lock=None):
     """Draw a group of Rectangles"""
     for x in range(-300, 350, 200):
         for y in range(-300, 350, 200):
-            draw_rectangle(tur, x-10, y+5, 20, 15)
+            args = [tur, x-10, y+5, 20, 15, "green"]
+            draw_shape(rectangle, args, lock)
 
+def draw_shape(shape, args, lock=None):
+    args_replaced = str(*args).replace(" ",", ")
+    eval(f'draw_{shape},{args_replaced},{lock}')
 
 def run_no_threads(tur, log, main_turtle):
     """Draw different shapes without using threads - DO NOT CHANGE"""
@@ -160,7 +160,7 @@ def run_no_threads(tur, log, main_turtle):
 def run_with_threads(tur, log, main_turtle):
     """Draw different shapes using threads"""
 
-    # Draw Coors system
+    # Draw Coord system
     tur.pensize(0.5)
     draw_coord_system(tur, 0, 0, size=375)
     tur.pensize(4)
@@ -172,6 +172,23 @@ def run_with_threads(tur, log, main_turtle):
     # TODO - Start adding your code here.
     # You need to use 4 threads where each thread concurrently drawing one type of shape.
     # You are free to change any functions in this code except those we marked DO NOT CHANGE.
+    ##########
+    lock = threading.Lock()
+    t1 = threading.Thread(target=draw_squares, args=(tur,lock))
+    t2 = threading.Thread(target=draw_circles, args=(tur,lock))
+    t3 = threading.Thread(target=draw_triangles, args=(tur,lock))
+    t4 = threading.Thread(target=draw_rectangles, args=(tur,lock))
+    
+    t1.start()
+    t2.start()
+    t3.start()
+    t4.start()
+
+    t1.join()
+    t2.join()
+    t3.join()
+    t4.join()
+    ##########
 
     log.step_timer('All drawing commands have been created')
 

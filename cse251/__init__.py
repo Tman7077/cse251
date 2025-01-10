@@ -7,7 +7,7 @@ import os
 import time
 import logging
 from datetime import datetime
-import matplotlib.pyplot as plt
+from matplotlib import pyplot as plt
 import numpy as np
 import json
 
