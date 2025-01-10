@@ -95,33 +95,61 @@ def draw_squares(tur, lock=None):
     for x in range(-300, 350, 200):
         for y in range(-300, 350, 200):
             args = [tur, x - 50, y + 50, 100, "black"]
-            draw_shape(square, args, lock)
+            draw_shape('square', args, lock)
 
 def draw_circles(tur, lock=None):
     """Draw a group of circles"""
     for x in range(-300, 350, 200):
         for y in range(-300, 350, 200):
             args = [tur, x, y-2, 50, "red"]
-            draw_shape(circle, args, lock)
+            draw_shape('circle', args, lock)
 
 def draw_triangles(tur, lock=None):
     """Draw a group of triangles"""
     for x in range(-300, 350, 200):
         for y in range(-300, 350, 200):
             args = [tur, x-30, y-30+10, 60, "blue"]
-            draw_shape(triangle, args, lock)
+            draw_shape('triangle', args, lock)
 
 def draw_rectangles(tur, lock=None):
     """Draw a group of Rectangles"""
     for x in range(-300, 350, 200):
         for y in range(-300, 350, 200):
             args = [tur, x-10, y+5, 20, 15, "green"]
-            draw_shape(rectangle, args, lock)
+            draw_shape('rectangle', args, lock)
 
 def draw_shape(shape, args, lock=None):
-    args_replaced = str(*args).replace(" ",", ")
-    eval(f'draw_{shape},{args_replaced},{lock}')
-
+    match shape:
+        case "square":
+            if lock is not None:
+                with lock:
+                    draw_square(*args)
+            else:
+                draw_square(*args)
+            pass
+        case "circle":
+            if lock is not None:
+                with lock:
+                    draw_circle(*args)
+            else:
+                draw_circle(*args)
+            pass
+        case "triangle":
+            if lock is not None:
+                with lock:
+                    draw_triangle(*args)
+            else:
+                draw_triangle(*args)
+            pass
+        case "rectangle":
+            if lock is not None:
+                with lock:
+                    draw_rectangle(*args)
+            else:
+                draw_rectangle(*args)
+            pass
+        case _:
+            pass
 def run_no_threads(tur, log, main_turtle):
     """Draw different shapes without using threads - DO NOT CHANGE"""
 
@@ -192,6 +220,7 @@ def run_with_threads(tur, log, main_turtle):
 
     log.step_timer('All drawing commands have been created')
 
+    tur.move(0, 0)
     log.write(f'Number of Drawing Commands: {tur.get_command_count()}')
 
     # Play the drawing commands that were created
