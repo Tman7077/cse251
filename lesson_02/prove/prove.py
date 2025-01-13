@@ -2,7 +2,7 @@
 Course: CSE 251 
 Lesson: L02 Prove
 File:   prove.py
-Author: <Add name here>
+Author: <Tyler Bartle>
 
 Purpose: Retrieve Star Wars details from a server
 
@@ -71,14 +71,58 @@ def main():
     log.start_timer('Starting to retrieve data from the server')
 
     # TODO Retrieve Top API urls
+    response = requests.get(TOP_API_URL)
+    
+    # Check the status code to see if the request succeeded.
+    if response.status_code == 200:
+        data = response.json()
 
     # TODO Retrieve Details on film 6
+    film6 = requests.get(data['films'] + '6').json()
 
     # TODO Display results
+    to_retrieve = {
+        'title': film6['title'],
+        'director': film6['director'],
+        'producer': film6['producer'],
+        'release_date': film6['release_date'],
+        'people': film6['characters'],
+        'starships': film6['starships'],
+        'vehicles': film6['vehicles'],
+        'species': film6['species']
+    }
+
+    for key, value in to_retrieve.items():
+        if key in ['people', 'starships', 'vehicles', 'species']:
+            length = len(value)
+            print(f'{key.title()}: {length}')
+            threads = []
+            for i in range(length):
+                threads.append(RetrieveData(value[i]))
+            to_print = []
+            for thread in threads:
+                thread.start()
+                to_print.append(thread.name)
+            for thread in threads:
+                thread.join()
+            print(*to_print)
+        else:
+            print(f'{key.title()}: {value.title()}')
 
     log.stop_timer('Total Time To complete')
     log.write(f'There were {call_count} calls to the server')
     
+class RetrieveData(threading.Thread):
+    def __init__(self, url):
+        threading.Thread.__init__(self)
+        self.url = url
+
+    def run(self):
+        global call_count
+        response = requests.get(self.url)
+        call_count += 1
+        if response.status_code == 200:
+            self.name = response.json()['name'].title()
 
 if __name__ == "__main__":
     main()
