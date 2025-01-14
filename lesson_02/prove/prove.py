@@ -61,10 +61,30 @@ call_count = 0
 
 
 # TODO Add your threaded class definition here
+class RetrieveData(threading.Thread):
+    def __init__(self, url, key=None):
+        threading.Thread.__init__(self)
+        # Bet you can't guess what these are for
+        self.url = url
+        self.key = key
+        self.return_value = ''
 
+    def run(self):
+        # It was already a global, I swear
+        global call_count
+        response = requests.get(self.url)
+        # Keep track of stats so pretty number matches other pretty number
+        call_count += 1
+        if response.status_code == 200:
+            # If no key was provided, prolly lookin' for a string, which has no [key], so don't ask for it, silly
+            if self.key is None:
+                self.return_value = response.json()
+            # Well, I mean, the opposite of what I just said. :). I'm so funny.
+            else:
+                self.return_value = response.json()[self.key]
 
 # TODO Add any functions you need here
-
+# Functions? What am I, a delegator? Nah bro, I'm a crocodenial.
 
 def main():
     log = Log(show_terminal=True)
@@ -83,50 +103,49 @@ def main():
     film6 = t2.return_value
 
     # TODO Display results
+    # All of the data that needs to be yoinked from the server, in list form
     to_retrieve_list = ['title', 'director', 'producer', 'release_date', 'characters', 'planets', 'starships', 'vehicles', 'species']
+    # All of the data that needs to be yoinked from the server, in dictionary form (as to avoid vain repetition, obviously) (as to avoid vain repetition, obviously)
     to_retrieve = {}
     for key in to_retrieve_list:
         to_retrieve[key] = film6[key]
 
+    # Let's get this bread... aka actually do the assignment here, I guess
     for key, value in to_retrieve.items():
+        # If the data to be yoinked is a list of URLs, ask again nicely and thEn print it
         if key in ['characters', 'planets', 'starships', 'vehicles', 'species']:
             length = len(value)
             log.write(f'{key.title()}: {length}')
+            # I guess we're sewing with a lot of needles now
             threads = []
             for i in range(length):
                 threads.append(RetrieveData(value[i], 'name'))
             to_print = []
+            # Start your engines
             for thread in threads:
                 thread.start()
+            # Okay just kidding
             for thread in threads:
                 thread.join()
+                # Steal all of their money and run away laughing
                 to_print.append(thread.return_value.title())
+            # Sort through their money and display the winnings for all to see
             log.write(', '.join(sorted(to_print)))
             log.write()
+        # If the data to be yoinked is a string (BORING), just get the printing over with already
         else:
             log.write(f'{key.title():<12}: {value.title()}')
             if key == 'release_date':
                 log.write()
     
+    # L boring stats
     log.stop_timer('Total Time To complete')
     log.write(f'There were {call_count} calls to the server')
-    
-class RetrieveData(threading.Thread):
-    def __init__(self, url, key=None):
-        threading.Thread.__init__(self)
-        self.url = url
-        self.key = key
-        self.return_value = ''
 
-    def run(self):
-        global call_count
-        response = requests.get(self.url)
-        call_count += 1
-        if response.status_code == 200:
-            if self.key is None:
-                self.return_value = response.json()
-            else:
-                self.return_value = response.json()[self.key]
+    # If you've read all of the comments up until this point, you're a trooper. I'm sorry for the pain you've endured. I'm not funny, I know.
+    # Also, I know this is a lot of comments, but I'm not sorry for that. I'm just sorry for the content of the comments. Or am I? Who am I kidding, no I'm not.
+    # Also also, I hope your day is a little brighter because of my silly comments. At least you know they're not just AI-generated and I know what I'm doing!
+    # Also also also (for realsies the last one), I am happy to be more professional with my comments in a professional workspace, but this ain't that, chief :) I'm gonna be a dork while I can.
 
 if __name__ == "__main__":
     main()
