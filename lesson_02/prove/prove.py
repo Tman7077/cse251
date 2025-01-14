@@ -105,7 +105,8 @@ def main():
     # TODO Display results
     # All of the data that needs to be yoinked from the server, in list form
     to_retrieve_list = ['title', 'director', 'producer', 'release_date', 'characters', 'planets', 'starships', 'vehicles', 'species']
-    # All of the data that needs to be yoinked from the server, in dictionary form (as to avoid vain repetition, obviously) (as to avoid vain repetition, obviously)
+    # All of the data that needs to be yoinked from the server, in dictionary form 
+    #       (as to avoid vain repetition, obviously) (as to avoid vain repetition, obviously)
     to_retrieve = {}
     for key in to_retrieve_list:
         to_retrieve[key] = film6[key]
@@ -142,10 +143,14 @@ def main():
     log.stop_timer('Total Time To complete')
     log.write(f'There were {call_count} calls to the server')
 
-    # If you've read all of the comments up until this point, you're a trooper. I'm sorry for the pain you've endured. I'm not funny, I know.
-    # Also, I know this is a lot of comments, but I'm not sorry for that. I'm just sorry for the content of the comments. Or am I? Who am I kidding, no I'm not.
-    # Also also, I hope your day is a little brighter because of my silly comments. At least you know they're not just AI-generated and I know what I'm doing!
-    # Also also also (for realsies the last one), I am happy to be more professional with my comments in a professional workspace, but this ain't that, chief :) I'm gonna be a dork while I can.
+    # If you've read all of the comments up until this point, you're a trooper.
+    #       I'm sorry for the pain you've endured. I'm not funny, I know.
+    # Also, I know this is a lot of comments, but I'm not sorry for that.
+    #       I'm just sorry for the content of the comments. Or am I? Who am I kidding, no I'm not.
+    # Also also, I hope your day is a little brighter because of my silly comments.
+    #       At least you know they're not just AI-generated and I know what I'm doing!
+    # Also also also (for realsies the last one), I am happy to be more professional with my comments in a professional workspace,
+    #       but this ain't that, chief :) I'm gonna be a dork while I can.
 
 if __name__ == "__main__":
     main()
