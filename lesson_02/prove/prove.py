@@ -71,58 +71,62 @@ def main():
     log.start_timer('Starting to retrieve data from the server')
 
     # TODO Retrieve Top API urls
-    response = requests.get(TOP_API_URL)
-    
-    # Check the status code to see if the request succeeded.
-    if response.status_code == 200:
-        data = response.json()
+    t1 = RetrieveData(TOP_API_URL)
+    t1.start()
+    t1.join()
+    data = t1.return_value
 
     # TODO Retrieve Details on film 6
-    film6 = requests.get(data['films'] + '6').json()
+    t2 = RetrieveData(data['films'] + '6')
+    t2.start()
+    t2.join()
+    film6 = t2.return_value
 
     # TODO Display results
-    to_retrieve = {
-        'title': film6['title'],
-        'director': film6['director'],
-        'producer': film6['producer'],
-        'release_date': film6['release_date'],
-        'people': film6['characters'],
-        'starships': film6['starships'],
-        'vehicles': film6['vehicles'],
-        'species': film6['species']
-    }
+    to_retrieve_list = ['title', 'director', 'producer', 'release_date', 'characters', 'planets', 'starships', 'vehicles', 'species']
+    to_retrieve = {}
+    for key in to_retrieve_list:
+        to_retrieve[key] = film6[key]
 
     for key, value in to_retrieve.items():
-        if key in ['people', 'starships', 'vehicles', 'species']:
+        if key in ['characters', 'planets', 'starships', 'vehicles', 'species']:
             length = len(value)
-            print(f'{key.title()}: {length}')
+            log.write(f'{key.title()}: {length}')
             threads = []
             for i in range(length):
-                threads.append(RetrieveData(value[i]))
+                threads.append(RetrieveData(value[i], 'name'))
             to_print = []
             for thread in threads:
                 thread.start()
-                to_print.append(thread.name)
             for thread in threads:
                 thread.join()
-            print(*to_print)
+                to_print.append(thread.return_value.title())
+            log.write(', '.join(sorted(to_print)))
+            log.write()
         else:
-            print(f'{key.title()}: {value.title()}')
-
+            log.write(f'{key.title():<12}: {value.title()}')
+            if key == 'release_date':
+                log.write()
+    
     log.stop_timer('Total Time To complete')
     log.write(f'There were {call_count} calls to the server')
     
 class RetrieveData(threading.Thread):
-    def __init__(self, url):
+    def __init__(self, url, key=None):
         threading.Thread.__init__(self)
         self.url = url
+        self.key = key
+        self.return_value = ''
 
     def run(self):
         global call_count
         response = requests.get(self.url)
         call_count += 1
         if response.status_code == 200:
-            self.name = response.json()['name'].title()
+            if self.key is None:
+                self.return_value = response.json()
+            else:
+                self.return_value = response.json()[self.key]
 
 if __name__ == "__main__":
     main()
