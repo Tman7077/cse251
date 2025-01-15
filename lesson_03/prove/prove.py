@@ -74,6 +74,29 @@ def main():
     yaxis_times = []
 
     # TODO Process all frames trying 1 cpu, then 2, then 3, ... to CPU_COUNT
+    for cpu_num in range(1, CPU_COUNT + 1):
+        xaxis_cpus.append(cpu_num)
+
+        # Start the timer
+        start_time = timeit.default_timer()
+
+        # Create a pool of processes
+        pool = mp.Pool(cpu_num)
+
+        # Process all the frames
+        for i in range(FRAME_COUNT):
+            image_file = f'elephant/image{i:03d}.png'
+            green_file = f'green/image{i:03d}.png'
+            process_file = f'processed/image{i:03d}.png'
+
+            pool.apply(create_new_frame, args=(image_file, green_file, process_file))
+
+        # Close the pool and wait for the work to finish
+        pool.close()
+        pool.join()
+
+        # Stop the timer
+        yaxis_times.append(timeit.default_timer() - start_time)
 
     # sample code: remove before submitting  >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     # process one frame #10
