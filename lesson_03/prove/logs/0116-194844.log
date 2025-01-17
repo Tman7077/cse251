@@ -1,0 +1,6 @@
+19:48:51| Time for processing 10 frames using 1 processes: 6.76850039999772
+19:48:56| Time for processing 10 frames using 2 process: 5.2223885000021255
+19:49:00| Time for processing 10 frames using 3 process: 4.469507400001021
+19:49:05| Time for processing 10 frames using 4 process: 4.235392400001729
+19:49:09| Time for processing 10 frames using 5 process: 4.162333300002501
+19:49:13| Time for processing 10 frames using 6 process: 4.055783800002246

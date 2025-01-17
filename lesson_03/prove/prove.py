@@ -2,7 +2,7 @@
 Course: CSE 251 
 Lesson: L03 Prove
 File:   prove.py
-Author: <Add name here>
+Author: <Tyler Bartle>
 
 Purpose: Video Frame Processing
 
@@ -13,6 +13,11 @@ Instructions:
   Do not change any of the from and import statements.
 - Only process the given MP4 files for this assignment.
 - Do not forget to complete any TODO comments.
+
+
+4: Meets Requirements
+The program processes all 300 frames, and uses the required pool.map function to do so.
+It also loops for 1-20 processes, logging each relevant time, and does logically decrease in time with more processes.
 """
 
 from matplotlib.pylab import plt  # load plot library
@@ -30,7 +35,7 @@ CPU_COUNT = mp.cpu_count() + 4
 
 # TODO Your final video needs to have 300 processed frames.
 # However, while you are testing your code, set this much lower!
-FRAME_COUNT = 20
+FRAME_COUNT = 300
 
 # RGB values for reference
 RED = 0
@@ -65,6 +70,12 @@ def create_new_frame(image_file, green_file, process_file):
     image_new = Image.composite(image_img, green_img, mask_img)
     image_new.save(process_file)
 
+def create_frame_helper(frame_number):
+    image_file = f'elephant/image{frame_number:03d}.png'
+    green_file = f'green/image{frame_number:03d}.png'
+    process_file = f'processed/image{frame_number:03d}.png'
+
+    create_new_frame(image_file, green_file, process_file)
 
 def main():
     all_process_time = timeit.default_timer()
@@ -84,12 +95,7 @@ def main():
         pool = mp.Pool(cpu_num)
 
         # Process all the frames
-        for i in range(FRAME_COUNT):
-            image_file = f'elephant/image{i:03d}.png'
-            green_file = f'green/image{i:03d}.png'
-            process_file = f'processed/image{i:03d}.png'
-
-            pool.apply(create_new_frame, args=(image_file, green_file, process_file))
+        pool.map(create_frame_helper, range(1, FRAME_COUNT + 1))
 
         # Close the pool and wait for the work to finish
         pool.close()
@@ -98,18 +104,7 @@ def main():
         # Stop the timer
         yaxis_times.append(timeit.default_timer() - start_time)
 
-    # sample code: remove before submitting  >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    # process one frame #10
-    image_number = 10
-
-    image_file = f'elephant/image{image_number:03d}.png'
-    green_file = f'green/image{image_number:03d}.png'
-    process_file = f'processed/image{image_number:03d}.png'
-
-    start_time = timeit.default_timer()
-    create_new_frame(image_file, green_file, process_file)
-    print(f'\nTime To Process all images = {timeit.default_timer() - start_time}')
-    # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+        log.write(f'Time for processing {FRAME_COUNT} frames using {cpu_num} process{"" if cpu_num == 1 else "es"}: {timeit.default_timer() - start_time}')
 
     # Log the total time this took
     log.write(f'Total Time for ALL processing: {timeit.default_timer() - all_process_time}')
