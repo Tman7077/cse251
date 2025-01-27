@@ -106,6 +106,12 @@ class Board():
         if x < 0 or y < 0 or x >= self.size or y >= self.size:
             return ''
         return self.board[x][y]
+    
+    def _can_fit(self, row, col, dr, dc, word_len):
+        """ Check if the word can fit in the given direction """
+        end_row = row + dr * (word_len - 1)
+        end_col = col + dc * (word_len - 1)
+        return 0 <= end_row < self.size and 0 <= end_col < self.size
 
     def display(self):
         """ Display the board with highlighting """
@@ -132,14 +138,40 @@ class Board():
                 self.highlighting = copy.deepcopy(highlight_copy)
                 return False
         return True
+    
+    def _matches_in_direction(self, row, col, dr, dc, word):
+        """ Check if the word matches in the given direction """
+        for i in range(len(word)):
+            r, c = row + dr * i, col + dc * i
+            if self.board[r][c] != word[i]:
+                return False
+            self.highlight(r, c)
+        return True
+    '''
+    """ Check if the word matches in the given direction, and highlight letters if it does. """
+        highlight_copy = copy.deepcopy(self.highlighting)  # Backup the current highlighting state
+        for i, letter in enumerate(word):
+            r, c = row + dr * i, col + dc * i
+            if not (0 <= r < self.size and 0 <= c < self.size):  # Bounds check
+                self.highlighting = copy.deepcopy(highlight_copy)  # Restore highlight state
+                return False
+            board_letter = self.get_letter(r, c)
+            if board_letter == letter:
+                self.highlight(r, c)  # Highlight the matching letter
+            else:
+                self.highlighting = copy.deepcopy(highlight_copy)  # Restore highlight state
+                return False
+        return True
+    '''
 
     def find_word(self, word):
         """ Find a word in the board """
         print(f'Finding {word}...')
         for row in range(self.size):
             for col in range(self.size):
-                for d in range(0, 8):
-                    if self._word_at_this_location(row, col, d, word):
+                for dr, dc in self.directions:
+                    if self._can_fit(row, col, dr, dc, len(word)) and \
+                    self._matches_in_direction(row, col, dr, dc, word):
                         return True
         return False
 
@@ -149,6 +181,7 @@ def main():
     board.display()
 
     start = time.perf_counter()
+
     for word in words:
         if not board.find_word(word):
             print(f'Error: Could not find "{word}"')

@@ -2,7 +2,7 @@
 Course: CSE 251 
 Lesson: L04 Prove
 File:   prove.py
-Author: <Add name here>
+Author: <Tyler Bartle>
 
 Purpose: Assignment 04 - Factory and Dealership
 
@@ -83,15 +83,16 @@ class Factory(threading.Thread):
         pass
 
 
-    def run(self):
+    def run(self, queue):
         for i in range(CARS_TO_PRODUCE):
             # TODO Add you code here
             """
             create a car
             place the car on the queue
             signal the dealer that there is a car on the queue
-           """
-
+            """
+            queue.put(Car())
+        queue.put("bye forever")
         # signal the dealer that there there are not more cars
         pass
 
@@ -104,14 +105,13 @@ class Dealer(threading.Thread):
         # to sell a car
         pass
 
-    def run(self):
+    def run(self, queue):
         while True:
             # TODO Add your code here
             """
             take the car from the queue
             signal the factory that there is an empty slot in the queue
             """
-
             # Sleep a little after selling a car
             # Last statement in this for loop - don't change
             time.sleep(random.random() / (SLEEP_REDUCE_FACTOR))
@@ -125,20 +125,24 @@ def main():
     # TODO Create queue251 
     # TODO Create lock(s) ?
 
+    sf = threading.Semaphore(MAX_QUEUE_SIZE)
+    sd = threading.Semaphore(MAX_QUEUE_SIZE)
+    q = Queue251
+
     # This tracks the length of the car queue during receiving cars by the dealership
     # i.e., update this list each time the dealer receives a car
     queue_stats = [0] * MAX_QUEUE_SIZE
 
     # TODO create your one factory
-
+    twenty_thousand_possible_cars_ten_at_a_time = Factory()
     # TODO create your one dealership
-
+    the_most_eclectic_ten_car_dealership_on_planet_earth = Dealer()
     log.start_timer()
 
     # TODO Start factory and dealership
-
+    twenty_thousand_possible_cars_ten_at_a_time.run(q)
     # TODO Wait for factory and dealership to complete
-
+    the_most_eclectic_ten_car_dealership_on_planet_earth.run(q)
     log.stop_timer(f'All {sum(queue_stats)} have been created')
 
     xaxis = [i for i in range(0, MAX_QUEUE_SIZE)]
