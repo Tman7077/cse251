@@ -206,7 +206,7 @@ def main():
 
     xaxis = [i + 1 for i in range(0, MAX_QUEUE_SIZE)] # i + 1 because the range is 1-10, not 0-9.
     plot = Plots()
-    plot.bar(xaxis, queue_stats, title=f'{sum(queue_stats)} Produced: Count VS Queue Size', x_label='Queue Size', y_label='Count', filename=f'Production count vs queue size-{time.strftime('%H%M%S')}.png')
+    plot.bar(xaxis, queue_stats, title=f'{sum(queue_stats)} Produced: Count VS Queue Size', x_label='Queue Size', y_label='Count', filename=f'Production count vs queue size-{time.strftime("%H%M%S")}.png')
 
 
 
