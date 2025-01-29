@@ -23,7 +23,7 @@ import json
 # Include cse 251 common Python files
 from cse251 import *
 
-RETRIEVE_THREADS = 4        # Number of retrieve_threads
+RETRIEVE_THREADS = 4        # Number of retrieve_threads, 38 is length of urls list and goes fastest
 NO_MORE_VALUES = 'No more'  # Special value to indicate no more items in the queue
 
 def retrieve_thread(q, l):  # TODO add arguments
@@ -32,28 +32,28 @@ def retrieve_thread(q, l):  # TODO add arguments
     while True:
         # TODO check to see if anything is in the queue
         if q.qsize() > 0:
-        # TODO process the value retrieved from the queue
-            if q.get() == NO_MORE_VALUES:
-                continue
-        # TODO make Internet call to get characters name and log it
-            response = requests.get(q.get()).json()
+            # TODO process the value retrieved from the queue
+            url = q.get()
+            if url == NO_MORE_VALUES:
+                break
+            # TODO make Internet call to get characters name and log it
+            response = requests.get(url).json()
             l.write(response['name'])
-        pass
 
 
 
-def file_reader(queue, l): # TODO add arguments
+def file_reader(q, l): # TODO add arguments
     """ This thread reading the data file and places the values in the data_queue """
 
     # TODO Open the data file "urls.txt" and place items into a queue
-    with open(r"C:\Users\tmanb\Code Projects\CSE251 - Parallelism and Concurrency\cse251\lesson_04\team\urls.txt", "r") as file:
+    with open("urls.txt", "r") as file:
         for line in file:
-            queue.put(line.strip())
+            q.put(line.strip())
     l.write('finished reading file')
 
     # TODO signal the retrieve threads one more time that there are "no more values"
-    for i in range(RETRIEVE_THREADS):
-        queue.put(NO_MORE_VALUES)
+    for _ in range(RETRIEVE_THREADS):
+        q.put(NO_MORE_VALUES)
 
 
 def main():
@@ -72,7 +72,7 @@ def main():
     fr = threading.Thread(target=file_reader, args=(q,log))
     
     rts = []
-    for i in range(RETRIEVE_THREADS):
+    for _ in range(RETRIEVE_THREADS):
         rts.append(threading.Thread(target=retrieve_thread, args=(q,log)))
 
     log.start_timer()
