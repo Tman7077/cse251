@@ -134,8 +134,9 @@ class Factory(threading.Thread):
             self.cars_available.release()  # Signal that a car is available
             self.log.write(f"Factory produced: {c}")
         # Signal the dealer that there there are not more cars
+        self.space_available.acquire()
         self.queue.put("bye forever")
-        self.cars_available.release()  # Ensure the dealer doesn't block on the final signal
+        self.cars_available.release()
         self.log.write("Factory: Production complete!")
 
 
