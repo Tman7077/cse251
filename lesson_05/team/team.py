@@ -2,7 +2,7 @@
 Course: CSE 251 
 Lesson: L05 Team Activity
 File:   team.py
-Author: <Add your name here>
+Author: <Tyler Bartle>
 
 Purpose: Check for prime values
 
@@ -22,7 +22,7 @@ from os.path import exists
 #Include cse 251 common Python files
 from cse251 import *
 
-PRIME_PROCESS_COUNT = 1
+PRIME_PROCESS_COUNT = 3
 
 def is_prime(n: int) -> bool:
     """Primality test using 6k+-1 optimization.
@@ -41,10 +41,23 @@ def is_prime(n: int) -> bool:
 
 
 # TODO create read_thread function
-
+def read_thread(filename, q):
+    with open(filename, 'r') as f:
+        for line in f:
+            q.put(int(line))
 
 # TODO create prime_process function
 
+def prime_process(q, primes, sem):
+    while True:
+        sem.acquire()
+        if q.qsize() == 0:
+            sem.release()
+            break
+        n = q.get(0)
+        sem.release()
+        if is_prime(n):
+            primes.append(n)
 
 def create_data_txt(filename):
     # only create if it doesn't exist 
@@ -65,21 +78,27 @@ def main():
     log.start_timer()
 
     # TODO Create shared data structures
-
+    q = mp.Queue()
+    primes = mp.Manager().list()
+    sem = mp.Semaphore(1)
     # TODO create reading thread
-
+    fr = threading.Thread(target=read_thread, args=(filename, q))
     # TODO create prime processes
-
+    processes = [mp.Process(target=prime_process, args=(q, primes, sem)) for _ in range(PRIME_PROCESS_COUNT)]
     # TODO Start them all
-
+    fr.start()
+    for p in processes:
+        p.start()
     # TODO wait for them to complete
-
+    fr.join()
+    for p in processes:
+        p.join()
     log.stop_timer(f'All primes have been found using {PRIME_PROCESS_COUNT} processes')
 
     # display the list of primes
     print(f'There are {len(primes)} found:')
     for prime in primes:
-        print(prime)
+        print(prime, end=', ')
 
 
 if __name__ == '__main__':
