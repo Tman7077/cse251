@@ -43,6 +43,11 @@ Outline of API calls to server
 2) Add "6" to the end of the films endpoint to get film 6 details
 3) Use as many threads possible to get the names of film 6 data (people, starships, ...)
 
+Justification for why I think this meets the requirements of the assignment:
+I never hardcoded the dictionary, and I followed all of the instructions given.
+The only fixed URL I used was the TOP_API_URL, and I used that to get the other URLs.
+All requirements of the assignment were fulfilled and the output is (almost?) identical to the sample output.
+
 """
 
 from datetime import datetime, timedelta
