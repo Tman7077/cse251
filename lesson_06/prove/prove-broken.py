@@ -9,13 +9,6 @@ Purpose: Processing Plant
 Instructions:
 
 - Implement the necessary classes to allow gifts to be created.
-
-### Justification for grade:
-- The program runs without errors and meets all requirements.
-- It uses half-duplex (one-way) pipes and closes them as needed.
-- It works dynamically with any number of marbles per bag and any number of total marbles.
-    - It would even "work" (as in, not break) if total marbles < marbles per bag, but it wouldn't actually send any gifts...
-- It uses a shared variable to count the number of gifts created.
 """
 
 import random
@@ -110,16 +103,11 @@ class Marble_Creator(mp.Process):
             sleep the required amount
         Let the bagger know there are no more marbles
         '''
-        # For each marble
         for _ in range(self.to_create):
-            # Send the marble to the bagger and sleep
             self.pipe_out.send(random.choice(self.colors))
             time.sleep(self.delay)
-        # print('Marble creator done')
-        ###
-        # self.pipe_out.close() # Do I need to close this end if it's half-duplex?
-        ###
-        self.pipe_out.send(None)
+        print('Marble creator done')
+        self.pipe_out.close()
 
 
 class Bagger(mp.Process):
@@ -142,35 +130,18 @@ class Bagger(mp.Process):
         tell the assembler that there are no more bags
         '''
         while True:
-            # Create a new bag for marbles
             bag = Bag()
-            # Until the bag is full
             while bag.get_size() < self.bag_size:
-                ###
-                # try:
-                #     marble = self.pipe_in.recv()
-                #     bag.add(marble)
-                # except EOFError:
-                #     print('Bagger EOFError')
-                #     self.pipe_out.close()
-                #     break
-                ###
-                # Receive whatever Marble_Creator sent
-                marble = self.pipe_in.recv()
-                # If MC sent the end flag (None)
-                if marble is None:
-                    # print('Bagger received end flag')
-                    # Close the pipe and send the end flag to Assembler
-                    self.pipe_in.close()
-                    self.pipe_out.send(None)
+                try:
+                    marble = self.pipe_in.recv()
+                    bag.add(marble)
+                except EOFError:
+                    print('Bagger EOFError')
+                    self.pipe_out.close()
                     break
-                # Otherwise, add the marble to the bag
-                bag.add(marble)
-            # If the bag isn't full, don't send it
             if bag.get_size() < self.bag_size: ##### This does mean that if the last bag isn't full, it's just thrown away. Is that right?
-                # print('Last bag not full, discarding')
+                print('Last bag not full, discarding')
                 break
-            # Othewrwise, send the full bag to Assembler and sleep
             self.pipe_out.send(bag)
             time.sleep(self.delay)
 
@@ -196,29 +167,15 @@ class Assembler(mp.Process):
         tell the wrapper that there are no more gifts
         '''
         while True:
-            ###
-            # try:
-            #     bag = self.pipe_in.recv()
-            #     gift = Gift(random.choice(self.marble_names), bag)
-            #     self.pipe_out.send(gift)
-            # except EOFError:
-            #     print('Assembler EOFError')
-            #     self.pipe_out.close()
-            #     break
-            ###
-            # Receive whatever Bagger sent
-            bag = self.pipe_in.recv()
-            # If Bagger sent the end flag (None)
-            if bag is None:
-                # print('Assembler received end flag')
-                # Close the pipe and send the end flag to Wrapper
-                self.pipe_in.close()
-                self.pipe_out.send(None)
+            try:
+                bag = self.pipe_in.recv()
+                gift = Gift(random.choice(self.marble_names), bag)
+                self.pipe_out.send(gift)
+                time.sleep(self.delay)
+            except EOFError:
+                print('Assembler EOFError')
+                self.pipe_out.close()
                 break
-            # Otherwise, create a gift, send it to Wrapper, and sleep
-            gift = Gift(random.choice(self.marble_names), bag)
-            self.pipe_out.send(gift)
-            time.sleep(self.delay)
 
 
 class Wrapper(mp.Process):
@@ -239,36 +196,22 @@ class Wrapper(mp.Process):
         '''
         with open(BOXES_FILENAME, 'w') as boxes_file:
             while True:
-                ###
-                # try:
-                #     gift = self.pipe_in.recv()
-                #     self.total_gifts.value += 1
-                #     print(f'Wrapper writing gift {self.total_gifts.value}')
-                #     boxes_file.write(f'Created - {datetime.now().time()}: {gift}\n')
-                #     time.sleep(self.delay)
-                # except EOFError:
-                #     print('Wrapper EOFError')
-                #     break
-                ###
-                # Receive whatever Assembler sent
-                gift = self.pipe_in.recv()
-                # If Assembler sent the end flag (None)
-                if gift is None:
-                    # print('Wrapper received end flag')
-                    # Close the pipe and break
-                    self.pipe_in.close()
+                try:
+                    gift = self.pipe_in.recv()
+                    self.total_gifts.value += 1
+                    print(f'Wrapper writing gift {self.total_gifts.value}')
+                    boxes_file.write(f'Created - {datetime.now().time()}: {gift}\n')
+                    time.sleep(self.delay)
+                except EOFError:
+                    print('Wrapper EOFError')
                     break
-                # Otherwise, increment total gifts created, write the gift to the file, and sleep
-                self.total_gifts.value += 1
-                # print(f'Wrapper writing gift {self.total_gifts.value}')
-                boxes_file.write(f'Created - {datetime.now().time()}: {gift}\n')
-                time.sleep(self.delay)              
+                
 
 
 def display_final_boxes(filename, log):
     """ Display the final boxes file to the log file -  Don't change """
     if os.path.exists(filename):
-        log.write(f'Contents of {filename}')
+        log.write('Contents of {filename}')
         with open(filename) as boxes_file:
             for line in boxes_file:
                 log.write(line.strip())
@@ -298,7 +241,24 @@ def main():
     log.write(f'Wrapper delay    = {settings[WRAPPER_DELAY]}')
 
     # TODO: create Pipes between creator -> bagger -> assembler -> wrapper
-    # These are Pipe(False)s so they are half-duplex, since I only need to send one-way (and only have to close one end)
+    '''
+    This crashes. Given {conn1, conn2 = mp.Pipe(False)},
+    conn1 can only receive, and conn2 can only send.
+    If trying to send from conn1, it raises OSError: connection is read-only,
+        and conn2 raises OSError: connection is write-only.
+    '''
+    # from_mc, to_b = mp.Pipe(False)
+    # from_b , to_a = mp.Pipe(False)
+    # from_a , to_w = mp.Pipe(False)
+
+    '''
+    This hangs. Given {conn1, conn2 = mp.Pipe(False)},
+    conn2 sends, but closing conn2 does not send EOF to conn1.
+    conn2 must send a manual end flag, then conn1 must close its end.
+    Why? Is there a way to make it work?
+         When does an EOFError actually come?
+         Does it ever come with a half-duplex pipe?
+    '''
     to_b, from_mc = mp.Pipe(False)
     to_a, from_b  = mp.Pipe(False)
     to_w, from_a  = mp.Pipe(False)
