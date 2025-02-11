@@ -15,6 +15,7 @@ Instructions:
 - It uses half-duplex (one-way) pipes and closes them as needed.
 - It works dynamically with any number of marbles per bag and any number of total marbles.
     - It would even "work" (as in, not break) if total marbles < marbles per bag, but it wouldn't actually send any gifts...
+    - It does throw away any partially filled bags if the marble creator is done, but the assignment was unclear on how to handle this, so I just chucked them.
 - It uses a shared variable to count the number of gifts created.
 """
 
@@ -152,7 +153,7 @@ class Bagger(mp.Process):
                     break            
             # If the bag isn't full, don't send it
             if bag.get_size() < self.bag_size: ##### This does mean that if the last bag isn't full, it's just thrown away. Is that right?
-                if bag.get_size() != 0: # If there are some marbles in the bag, log it
+                if bag.get_size() != 0: # If there are some marbles in the bag, inform the user
                     print(f'Last bag had {bag.get_size()} of {self.bag_size} marbles, and was discarded.')
                 break
             # Otherwise, send the full bag to Assembler and sleep
