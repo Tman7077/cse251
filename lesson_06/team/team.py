@@ -2,7 +2,7 @@
 Course: CSE 251 
 Lesson: L06 Team Activity
 File:   team.py
-Author: <Add name here>
+Author: <Tyler Bartle>
 
 Purpose: Team Activity
 
@@ -23,7 +23,7 @@ import filecmp
 # Include cse 251 common Python files
 from cse251 import *
 
-def sender(): # Parent
+def sender(pipe_out, filename): # Parent
     """ function to send messages to other end of pipe """
     '''
     open the file
@@ -31,17 +31,40 @@ def sender(): # Parent
     Note: you must break each line in the file into words and
           send those words through the pipe
     '''
-    pass
+    with open(filename, 'r') as f:
+        for line in f:
+            for word in line.split():
+                pipe_out.send(word)
+            pipe_out.send('\n')
+    
+    pipe_out.close()
 
 
-def receiver(): # Child
+def receiver(pipe_in, filename, items_sent): # Child
     """ function to print the messages received from other end of pipe """
     ''' 
     open the file for writing
     receive all content through the shared pipe and write to the file
     Keep track of the number of items sent over the pipe
     '''
-    pass
+    with open(filename, 'w') as f:
+        line = ''
+        last_line = None
+        while True:
+            try:
+                word = pipe_in.recv()
+                items_sent.value += 1
+                if word != '\n':
+                    line += word + ' '
+                else:
+                    if last_line != None:
+                        f.write('\n')
+                    f.write(line.strip())
+                    last_line = line
+                    line = ''
+            except EOFError:
+                break
+    pipe_in.close()
 
 
 def are_files_same(filename1, filename2):
@@ -51,22 +74,31 @@ def are_files_same(filename1, filename2):
 
 def copy_file(log, filename1, filename2):
     # TODO create a pipe 
-    
+    to_r, from_s = mp.Pipe(False)
     # TODO create variable to count items sent over the pipe
-
+    items_sent = Value('i', 0)
     # TODO create processes 
+    p1 = Process(target=sender, args=(from_s, filename1))
+    p2 = Process(target=receiver, args=(to_r, filename2, items_sent))
 
     log.start_timer()
     start_time = log.get_time()
 
     # TODO start processes 
+    p1.start()
+    p2.start()
     
+    to_r.close()
+    from_s.close()
+
     # TODO wait for processes to finish
+    p1.join()
+    p2.join()
 
     stop_time = log.get_time()
 
-    log.stop_timer(f'Total time to transfer content = {PUT YOUR VARIABLE HERE}: ')
-    log.write(f'items / second = {PUT YOUR VARIABLE HERE / (stop_time - start_time)}')
+    log.stop_timer(f'Total time to transfer content')
+    log.write(f'items / second = {items_sent.value / (stop_time - start_time)}')
 
     if are_files_same(filename1, filename2):
         log.write(f'{filename1} - Files are the same')
@@ -81,4 +113,4 @@ if __name__ == "__main__":
     copy_file(log, 'gettysburg.txt', 'gettysburg-copy.txt')
     
     # After you get the gettysburg.txt file working, uncomment this statement
-    # copy_file(log, 'bom.txt', 'bom-copy.txt')
+    copy_file(log, 'bom.txt', 'bom-copy.txt')
