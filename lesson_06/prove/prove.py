@@ -115,11 +115,9 @@ class Marble_Creator(mp.Process):
             # Send the marble to the bagger and sleep
             self.pipe_out.send(random.choice(self.colors))
             time.sleep(self.delay)
-        # print('Marble creator done')
-        ###
-        # self.pipe_out.close() # Do I need to close this end if it's half-duplex?
-        ###
-        self.pipe_out.send(None)
+        # Close the pipe, signaling to Bagger that MC is done
+        self.pipe_out.close()
+        
 
 
 class Bagger(mp.Process):
@@ -146,33 +144,23 @@ class Bagger(mp.Process):
             bag = Bag()
             # Until the bag is full
             while bag.get_size() < self.bag_size:
-                ###
-                # try:
-                #     marble = self.pipe_in.recv()
-                #     bag.add(marble)
-                # except EOFError:
-                #     print('Bagger EOFError')
-                #     self.pipe_out.close()
-                #     break
-                ###
-                # Receive whatever Marble_Creator sent
-                marble = self.pipe_in.recv()
-                # If MC sent the end flag (None)
-                if marble is None:
-                    # print('Bagger received end flag')
-                    # Close the pipe and send the end flag to Assembler
-                    self.pipe_in.close()
-                    self.pipe_out.send(None)
-                    break
-                # Otherwise, add the marble to the bag
-                bag.add(marble)
+                try: # Receive whatever Marble_Creator sent
+                    marble = self.pipe_in.recv()
+                    bag.add(marble)
+                except EOFError: # If the pipe has been closed
+                    # print('Bagger reached end of pipe.')
+                    break            
             # If the bag isn't full, don't send it
             if bag.get_size() < self.bag_size: ##### This does mean that if the last bag isn't full, it's just thrown away. Is that right?
-                # print('Last bag not full, discarding')
+                if bag.get_size() != 0: # If there are some marbles in the bag, log it
+                    print(f'Last bag had {bag.get_size()} of {self.bag_size} marbles, and was discarded.')
                 break
-            # Othewrwise, send the full bag to Assembler and sleep
+            # Otherwise, send the full bag to Assembler and sleep
             self.pipe_out.send(bag)
             time.sleep(self.delay)
+        # Close the pipes, signaling to Assembler that Bagger is done
+        self.pipe_in.close()
+        self.pipe_out.close()
 
 
 class Assembler(mp.Process):
@@ -196,29 +184,19 @@ class Assembler(mp.Process):
         tell the wrapper that there are no more gifts
         '''
         while True:
-            ###
-            # try:
-            #     bag = self.pipe_in.recv()
-            #     gift = Gift(random.choice(self.marble_names), bag)
-            #     self.pipe_out.send(gift)
-            # except EOFError:
-            #     print('Assembler EOFError')
-            #     self.pipe_out.close()
-            #     break
-            ###
-            # Receive whatever Bagger sent
-            bag = self.pipe_in.recv()
-            # If Bagger sent the end flag (None)
-            if bag is None:
-                # print('Assembler received end flag')
-                # Close the pipe and send the end flag to Wrapper
-                self.pipe_in.close()
-                self.pipe_out.send(None)
-                break
-            # Otherwise, create a gift, send it to Wrapper, and sleep
-            gift = Gift(random.choice(self.marble_names), bag)
-            self.pipe_out.send(gift)
-            time.sleep(self.delay)
+            try:
+                # Receive whatever Bagger sent
+                bag = self.pipe_in.recv()
+                # Create a gift, send it to Wrapper, and sleep
+                gift = Gift(random.choice(self.marble_names), bag)
+                self.pipe_out.send(gift)
+                time.sleep(self.delay)
+            except EOFError: # If the pipe has been closed
+                # print('Assembler reached end of pipe.')
+                break            
+        # Close the pipes, signaling to Wrapper that Assembler is done
+        self.pipe_in.close()
+        self.pipe_out.close()
 
 
 class Wrapper(mp.Process):
@@ -239,30 +217,18 @@ class Wrapper(mp.Process):
         '''
         with open(BOXES_FILENAME, 'w') as boxes_file:
             while True:
-                ###
-                # try:
-                #     gift = self.pipe_in.recv()
-                #     self.total_gifts.value += 1
-                #     print(f'Wrapper writing gift {self.total_gifts.value}')
-                #     boxes_file.write(f'Created - {datetime.now().time()}: {gift}\n')
-                #     time.sleep(self.delay)
-                # except EOFError:
-                #     print('Wrapper EOFError')
-                #     break
-                ###
-                # Receive whatever Assembler sent
-                gift = self.pipe_in.recv()
-                # If Assembler sent the end flag (None)
-                if gift is None:
-                    # print('Wrapper received end flag')
-                    # Close the pipe and break
-                    self.pipe_in.close()
+                try: # Receive whatever Assembler sent
+                    gift = self.pipe_in.recv()
+                    # Increment total gifts created, write the gift to the file, and sleep
+                    self.total_gifts.value += 1
+                    # print(f'Wrapper writing gift {self.total_gifts.value}')
+                    boxes_file.write(f'Created - {datetime.now().time()}: {gift}\n')
+                    time.sleep(self.delay)
+                except EOFError: # If the pipe has been closed
+                    # print('Wrapper reached end of pipe.')
                     break
-                # Otherwise, increment total gifts created, write the gift to the file, and sleep
-                self.total_gifts.value += 1
-                # print(f'Wrapper writing gift {self.total_gifts.value}')
-                boxes_file.write(f'Created - {datetime.now().time()}: {gift}\n')
-                time.sleep(self.delay)              
+        # Close the pipe, signaling to main() that Wrapper is done
+        self.pipe_in.close()             
 
 
 def display_final_boxes(filename, log):
@@ -324,6 +290,14 @@ def main():
     b.start()
     a.start()
     w.start()
+
+    # Close all main() instances of the pipes
+    from_mc.close()
+    to_b.close()
+    from_b.close()
+    to_a.close()
+    from_a.close()
+    to_w.close()
 
     log.write('Waiting for processes to finish')
     # TODO add code here
