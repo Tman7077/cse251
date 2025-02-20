@@ -1,0 +1,26 @@
+15:01:30| Marble count     = 100
+15:01:30| Marble delay     = 0.01
+15:01:30| Marbles in a bag = 7
+15:01:30| Bagger delay     = 0.05
+15:01:30| Assembler delay  = 0.05
+15:01:30| Wrapper delay    = 0.05
+15:01:30| Create the processes
+15:01:30| Starting the processes
+15:01:30| Waiting for processes to finish
+15:01:36| Contents of boxes.txt
+15:01:36| Created - 15:01:32.836314: Large marble: 5-Star, marbles: Silver Pink, Middle Green Yellow, Lilac Luster, Ruby, Granny Smith Apple, Cobalt Blue, Russian Violet
+15:01:36| Created - 15:01:32.955059: Large marble: Lucky, marbles: Outrageous Orange, Dark Moss Green, Neon Pink, Stop Red, Green, Blue, Ivory
+15:01:36| Created - 15:01:33.080842: Large marble: Zeus, marbles: Safety Yellow, Bistre Brown, Blue Bell, Thulian Pink, Outrageous Orange, Ivory, Candy Pink
+15:01:36| Created - 15:01:33.200937: Large marble: Winner, marbles: Middle Red Purple, Honeydew, Cobalt Blue, Antique Bronze, White Smoke, Middle Green, Middle Green
+15:01:36| Created - 15:01:33.345205: Large marble: Spinner, marbles: Chinese Red, Brink Pink, Royal Blue, Blue-Green, Lavender Purple, Candy Pink, Eerie Black
+15:01:36| Created - 15:01:33.476046: Large marble: Lucky, marbles: Mulberry, Duke Blue, Middle Green, Granny Smith Apple, Zomp, Purple, Thulian Pink
+15:01:36| Created - 15:01:33.599221: Large marble: Zeus, marbles: Isabelline, Ruby, Middle Green Yellow, Maximum Purple, Neon Dark Green, Sheen Green, Orange Peel
+15:01:36| Created - 15:01:33.738250: Large marble: Apollo, marbles: Neon Silver, Royal Blue, Light Orange, Shandy, Gold, Pale Cerulean, Ivory
+15:01:36| Created - 15:01:33.862200: Large marble: Spinner, marbles: Brink Pink, White Smoke, Orange Soda, Orange Soda, Royal Red, Maximum Purple, Middle Red Purple
+15:01:36| Created - 15:01:33.986852: Large marble: Apollo, marbles: Dark Moss Green, Safety Yellow, Venetian Red, Blue Bell, Pale Taupe, Lumber, Indigo
+15:01:36| Created - 15:01:34.118096: Large marble: Winner, marbles: Antique Brass, Blue Bell, Neon Silver, Venetian Red, Arylide Yellow, Shandy, Spanish Orange
+15:01:36| Created - 15:01:34.241932: Large marble: Lucky, marbles: Granny Smith Apple, Zomp, Silver Pink, Vegas Gold, Eerie Black, Mulberry, Rose Quartz
+15:01:36| Created - 15:01:34.367378: Large marble: Spinner, marbles: Royal Red, Sheen Green, Platinum, Liver Chestnut, Platinum, Honeydew, Orange Soda
+15:01:36| Created - 15:01:34.494400: Large marble: Lucky, marbles: Bistre Brown, Gold, Thulian Pink, Gold, Lavender Blue, Purple Plum, Neon Pink
+15:01:36| Total gifts created: 14
+15:01:36| Total time = 5.22844610

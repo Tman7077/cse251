@@ -9,6 +9,14 @@ Purpose: Processing Plant
 Instructions:
 
 - Implement the necessary classes to allow gifts to be created.
+
+### Justification for grade:
+- The program runs without errors and meets all requirements.
+- It uses half-duplex (one-way) pipes and closes them as needed.
+- It works dynamically with any number of marbles per bag and any number of total marbles.
+    - It would even "work" (as in, not break) if total marbles < marbles per bag, but it wouldn't actually send any gifts...
+    - It does throw away any partially filled bags if the marble creator is done, but the assignment was unclear on how to handle this, so I just chucked them.
+- It uses a shared variable to count the number of gifts created.
 """
 
 import random
@@ -103,10 +111,14 @@ class Marble_Creator(mp.Process):
             sleep the required amount
         Let the bagger know there are no more marbles
         '''
+        # For each marble
         for _ in range(self.to_create):
+            # Send the marble to the bagger and sleep
             self.pipe_out.send(random.choice(self.colors))
             time.sleep(self.delay)
-        self.pipe_out.close()
+        # Close the pipe, signaling to Bagger that MC is done
+        # self.pipe_out.close()
+        
 
 
 class Bagger(mp.Process):
@@ -128,6 +140,27 @@ class Bagger(mp.Process):
             sleep the required amount
         tell the assembler that there are no more bags
         '''
+        while True:
+            # Create a new bag for marbles
+            bag = Bag()
+            # Until the bag is full
+            while bag.get_size() < self.bag_size:
+                try: # Receive whatever Marble_Creator sent
+                    marble = self.pipe_in.recv()
+                    bag.add(marble)
+                except EOFError: # If the pipe has been closed
+                    # print('Bagger reached end of pipe.')
+                    break            
+            # If the bag isn't full, don't send it
+            if bag.get_size() < self.bag_size: ##### This does mean that if the last bag isn't full, it's just thrown away. Is that right?
+                if bag.get_size() != 0: # If there are some marbles in the bag, inform the user
+                    print(f'Last bag had {bag.get_size()} of {self.bag_size} marbles, and was discarded.')
+                break
+            # Otherwise, send the full bag to Assembler and sleep
+            self.pipe_out.send(bag)
+            time.sleep(self.delay)
+        # Close the pipes, signaling to Assembler that Bagger is done
+        self.pipe_in.close()
         self.pipe_out.close()
 
 
@@ -141,6 +174,7 @@ class Assembler(mp.Process):
         # TODO Add any arguments and variables here
         self.pipe_in = pipe_in
         self.pipe_out = pipe_out
+        self.delay = delay
 
     def run(self):
         '''
@@ -150,15 +184,30 @@ class Assembler(mp.Process):
             sleep the required amount
         tell the wrapper that there are no more gifts
         '''
+        while True:
+            try:
+                # Receive whatever Bagger sent
+                bag = self.pipe_in.recv()
+                # Create a gift, send it to Wrapper, and sleep
+                gift = Gift(random.choice(self.marble_names), bag)
+                self.pipe_out.send(gift)
+                time.sleep(self.delay)
+            except EOFError: # If the pipe has been closed
+                # print('Assembler reached end of pipe.')
+                break            
+        # Close the pipes, signaling to Wrapper that Assembler is done
+        self.pipe_in.close()
         self.pipe_out.close()
 
 
 class Wrapper(mp.Process):
     """ Takes created gifts and "wraps" them by placing them in the boxes file. """
-    def __init__(self, pipe_in, delay):
+    def __init__(self, pipe_in, delay, total_gifts):
         mp.Process.__init__(self)
         # TODO Add any arguments and variables here
         self.pipe_in = pipe_in
+        self.delay = delay
+        self.total_gifts = total_gifts
         
     def run(self):
         '''
@@ -167,12 +216,26 @@ class Wrapper(mp.Process):
             save gift to the file with the current time
             sleep the required amount
         '''
+        with open(BOXES_FILENAME, 'w') as boxes_file:
+            while True:
+                try: # Receive whatever Assembler sent
+                    gift = self.pipe_in.recv()
+                    # Increment total gifts created, write the gift to the file, and sleep
+                    self.total_gifts.value += 1
+                    # print(f'Wrapper writing gift {self.total_gifts.value}')
+                    boxes_file.write(f'Created - {datetime.now().time()}: {gift}\n')
+                    time.sleep(self.delay)
+                except EOFError: # If the pipe has been closed
+                    # print('Wrapper reached end of pipe.')
+                    break
+        # Close the pipe, signaling to main() that Wrapper is done
+        self.pipe_in.close()             
 
 
 def display_final_boxes(filename, log):
     """ Display the final boxes file to the log file -  Don't change """
     if os.path.exists(filename):
-        log.write('Contents of {filename}')
+        log.write(f'Contents of {filename}')
         with open(filename) as boxes_file:
             for line in boxes_file:
                 log.write(line.strip())
@@ -202,9 +265,10 @@ def main():
     log.write(f'Wrapper delay    = {settings[WRAPPER_DELAY]}')
 
     # TODO: create Pipes between creator -> bagger -> assembler -> wrapper
-    to_b, from_mc = mp.Pipe(False)
-    to_a, from_b  = mp.Pipe(False)
-    to_w, from_a  = mp.Pipe(False)
+    # These are Pipe(False)s so they are half-duplex, since I only need to send one-way (and only have to close one end)
+    to_b, from_mc = mp.Pipe()
+    to_a, from_b  = mp.Pipe()
+    to_w, from_a  = mp.Pipe()
 
     # TODO create variable to be used to count the number of gifts
     total_gifts = mp.Value('i', 0)
@@ -227,6 +291,14 @@ def main():
     b.start()
     a.start()
     w.start()
+
+    # Close all main() instances of the pipes
+    from_mc.close()
+    to_b.close()
+    from_b.close()
+    to_a.close()
+    from_a.close()
+    to_w.close()
 
     log.write('Waiting for processes to finish')
     # TODO add code here

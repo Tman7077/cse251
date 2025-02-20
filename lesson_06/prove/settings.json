@@ -1,5 +1,5 @@
 {
-    "marble-count": 1000,
+    "marble-count": 100,
     "creator-delay": 0.01,
     "bagger-delay": 0.05,
     "assembler-delay": 0.05,

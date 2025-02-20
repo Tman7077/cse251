@@ -1,0 +1,26 @@
+14:51:28| Marble count     = 100
+14:51:28| Marble delay     = 0.01
+14:51:28| Marbles in a bag = 7
+14:51:28| Bagger delay     = 0.05
+14:51:28| Assembler delay  = 0.05
+14:51:28| Wrapper delay    = 0.05
+14:51:28| Create the processes
+14:51:28| Starting the processes
+14:51:28| Waiting for processes to finish
+14:51:32| Contents of boxes.txt
+14:51:32| Created - 14:51:30.399233: Large marble: Sure Shot, marbles: Mango Tango, Purple, Maximum Violet, Beaver, Purple Plum, Lavender Blue, Chinese Red
+14:51:32| Created - 14:51:30.529297: Large marble: Winner, marbles: Purple, Blue-Green, Mimi Pink, Almond, Middle Green Yellow, Neon Silver, Vegas Gold
+14:51:32| Created - 14:51:30.669039: Large marble: Lucky, marbles: Arylide Yellow, Royal Red, Emerald, Silver Pink, Maximum Purple, Mode Beige, Isabelline
+14:51:32| Created - 14:51:30.784321: Large marble: 5-Star, marbles: Orange Soda, Antique Bronze, Gold, Duke Blue, Sage, Dark Fuchsia, Brink Pink
+14:51:32| Created - 14:51:30.918402: Large marble: Sure Shot, marbles: Royal Red, Lilac Luster, Tuscan Brown, Arylide Yellow, Orange Soda, Silver Chalice, Black Coral
+14:51:32| Created - 14:51:31.032918: Large marble: Apollo, marbles: Middle Green Yellow, Lemon Lime, Pastel Blue, Safety Yellow, Golden Yellow, Pale Cerulean, Green
+14:51:32| Created - 14:51:31.158314: Large marble: Hercules, marbles: Almond, Blue-Green, Blue, Blue, Brown, Vegas Gold, Blue-Green
+14:51:32| Created - 14:51:31.282155: Large marble: Sure Shot, marbles: Auburn, Pastel Gray, Ivory, Emerald, Pastel Gray, Stop Red, Rose Dust
+14:51:32| Created - 14:51:31.414360: Large marble: Winner, marbles: Brink Pink, Orange Soda, Neon Dark Green, Vegas Gold, Arylide Yellow, Antique Brass, Blue Bell
+14:51:32| Created - 14:51:31.541365: Large marble: Sure Shot, marbles: Tuscan Brown, Ruby, Ivory, Brown, Shandy, Lavender Purple, Pale Plum
+14:51:32| Created - 14:51:31.669859: Large marble: Lucky, marbles: Dark Moss Green, Mode Beige, Lilac Luster, Honeydew, Royal Blue, Spanish Orange, Neon Silver
+14:51:32| Created - 14:51:31.793923: Large marble: Apollo, marbles: Zomp, Pale Goldenrod, Royal Red, Silver Pink, Lumber, Russian Green, Pale Taupe
+14:51:32| Created - 14:51:31.917246: Large marble: Big Joe, marbles: Almond, Spanish Orange, Lavender Blue, Liver Chestnut, Icterine, Terra Cotta, Orange Soda
+14:51:32| Created - 14:51:32.033601: Large marble: Apollo, marbles: Orange Soda, Light Orchid, Maximum Violet, Eerie Black, Gold, Emerald, Rose Quartz
+14:51:32| Total gifts created: 14
+14:51:32| Total time = 4.48206650

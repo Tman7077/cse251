@@ -16,6 +16,15 @@ Note: each of the 5 task functions need to return a string.  They should not pri
 TODO:
 
 Add your comments here on the pool sizes that you used for your assignment and why they were the best choices.
+
+Pool sizes:
+
+Because I have an 8-core, 16-thread CPU, I decided on the following values:
+    PRIME_POOL_SIZE = 3
+    WORD_POOL_SIZE = 3
+    UPPER_POOL_SIZE = 3
+    SUM_POOL_SIZE = 3
+    NAME_POOL_SIZE = 4
 """
 
 from datetime import datetime, timedelta
