@@ -25,6 +25,15 @@ Because I have an 8-core, 16-thread CPU, I decided on the following values:
     UPPER_POOL_SIZE = 3
     SUM_POOL_SIZE = 3
     NAME_POOL_SIZE = 4
+The total number of processes adds to 16, effectively leaving one (hardware) thread per process.
+I prioritized the name pool, as it is the most I/O bound process,
+    as it needs to make a request to a server to get the information.
+The word pool is also I/O bound, but it is a local file, so I gave it a lower priority.
+The other pools are CPU-bound, so I split them equally.
+
+The real reason I picked these values specifically is because
+    they minimized the total time to process all tasks—
+    at least in my testing.
 """
 
 from datetime import datetime, timedelta
