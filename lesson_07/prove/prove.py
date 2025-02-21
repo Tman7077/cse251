@@ -34,6 +34,17 @@ The other pools are CPU-bound, so I split them equally.
 The real reason I picked these values specifically is because
     they minimized the total time to process all tasks—
     at least in my testing.
+Anything over my hardware thread count was slower,
+    and decreasing the number of processes dedicated to CPU-bound tasks
+    as to prioritize the I/O-bound tasks was also slower
+    (because going from 3 processes to 2 is a massive percentage cut).
+
+
+    
+Justification for grade:
+I believe I should receive full credit for this assignment.
+I have completed all of the requirements and have tested my code to ensure it works as expected.
+I have also added comments to explain my reasoning for the pool sizes I have chosen.
 """
 
 from datetime import datetime, timedelta
@@ -48,11 +59,11 @@ import math
 from cse251 import *
 
 # Constants - Don't change
-TYPE_PRIME  = 'prime'
-TYPE_WORD   = 'word'
-TYPE_UPPER  = 'upper'
-TYPE_SUM    = 'sum'
-TYPE_NAME   = 'name'
+TYPE_PRIME = 'prime'
+TYPE_WORD  = 'word'
+TYPE_UPPER = 'upper'
+TYPE_SUM   = 'sum'
+TYPE_NAME  = 'name'
 
 # TODO: Change the pool sizes and explain your reasoning in the header comment
 
@@ -64,10 +75,10 @@ NAME_POOL_SIZE  = 4 # I/O-bound, but mega—because it's not a local file, it's 
 
 # Global lists to collect the task results
 result_primes = []
-result_words = []
-result_upper = []
-result_sums = []
-result_names = []
+result_words  = []
+result_upper  = []
+result_sums   = []
+result_names  = []
 
 def is_prime(n: int):
     """Primality test using 6k+-1 optimization.
@@ -94,9 +105,9 @@ def task_prime(value):
         {value} is not prime
     """
     if is_prime(value):
-        return f'{value} is prime'
+        return f'{value:,} is prime'
     else:
-        return f'{value} is not prime'
+        return f'{value:,} is not prime'
 
 
 def task_word(word):
@@ -109,7 +120,7 @@ def task_word(word):
     """
     with open('words.txt', 'r') as file:
         if word in file.read():
-            return f'{word} Found'
+            return f'{word} found'
         else:
             return f'{word} not found *****'
 
@@ -128,7 +139,7 @@ def task_sum(start_value, end_value):
         sum of all numbers between start_value and end_value
         answer = {start_value:,} to {end_value:,} = {total:,}
     """
-    return f'{start_value} to {end_value} = {sum(range(start_value, end_value + 1))}'
+    return f'Sum of all numbers from {start_value:,} to {end_value:,} = {sum(range(start_value, end_value + 1)):,}'
 
 
 def task_name(url):
@@ -145,6 +156,7 @@ def task_name(url):
     else:
         return f'{url} had an error receiving the information'
 
+# Callback functions to collect the results
 def prime_return(value):
     result_primes.append(value)
 def word_return(value):
@@ -161,14 +173,15 @@ def main():
     log = Log(show_terminal=True)
     log.start_timer()
     start = time.perf_counter()
+
     # TODO Create process pools
     prime_pool = mp.Pool(PRIME_POOL_SIZE)
     word_pool = mp.Pool(WORD_POOL_SIZE)
     upper_pool = mp.Pool(UPPER_POOL_SIZE)
     sum_pool = mp.Pool(SUM_POOL_SIZE)
     name_pool = mp.Pool(NAME_POOL_SIZE)
+
     # TODO change the following if statements to start the pools
-    
     count = 0
     task_files = glob.glob("tasks/*.task")
     seq = time.perf_counter() - start
@@ -191,18 +204,22 @@ def main():
 
     # TODO wait on the pools
     prime_pool.close()
-    prime_pool.join()
     word_pool.close()
-    word_pool.join()
     upper_pool.close()
-    upper_pool.join()
     sum_pool.close()
-    sum_pool.join()
     name_pool.close()
+    
+    prime_pool.join()
+    word_pool.join()
+    upper_pool.join()
+    sum_pool.join()
     name_pool.join()
+
     # DO NOT change any code below this line!
-    # Note: I added a "Sequential process time" log entry to compare the sequential time to the parallel time.
-    # I did not modify anything, just added one line.
+    '''
+    Note: I added a "Sequential process time" log entry to compare the sequential time to the parallel time.
+    I did not modify anything, just added one line.
+    '''
     #---------------------------------------------------------------------------
     def log_list(lst, log):
         for item in lst:
