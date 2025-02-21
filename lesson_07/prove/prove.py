@@ -109,7 +109,6 @@ def task_prime(value):
     else:
         return f'{value:,} is not prime'
 
-
 def task_word(word):
     """
     search in file 'words.txt'
@@ -124,14 +123,12 @@ def task_word(word):
         else:
             return f'{word} not found *****'
 
-
 def task_upper(text):
     """
     Add the following to the global list:
         {text} ==>  uppercase version of {text}
     """
     return text.upper()
-
 
 def task_sum(start_value, end_value):
     """
@@ -140,7 +137,6 @@ def task_sum(start_value, end_value):
         answer = {start_value:,} to {end_value:,} = {total:,}
     """
     return f'Sum of all numbers from {start_value:,} to {end_value:,} = {sum(range(start_value, end_value + 1)):,}'
-
 
 def task_name(url):
     """
@@ -155,18 +151,6 @@ def task_name(url):
         return f'{url} has name {response.json()["name"]}'
     else:
         return f'{url} had an error receiving the information'
-
-# Callback functions to collect the results
-def prime_return(value):
-    result_primes.append(value)
-def word_return(value):
-    result_words.append(value)
-def upper_return(value):
-    result_upper.append(value)
-def sum_return(value):
-    result_sums.append(value)
-def name_return(value):
-    result_names.append(value)
 
 
 def main():
@@ -190,15 +174,15 @@ def main():
         count += 1
         task_type = task['task']
         if task_type == TYPE_PRIME:
-            prime_pool.apply_async(task_prime, args=(task['value'],), callback=prime_return)
+            prime_pool.apply_async(task_prime, args=(task['value'],), callback=result_primes.append)
         elif task_type == TYPE_WORD:
-            word_pool.apply_async(task_word, args=(task['word'],), callback=word_return)
+            word_pool.apply_async(task_word, args=(task['word'],), callback=result_words.append)
         elif task_type == TYPE_UPPER:
-            upper_pool.apply_async(task_upper, args=(task['text'],), callback=upper_return)
+            upper_pool.apply_async(task_upper, args=(task['text'],), callback=result_upper.append)
         elif task_type == TYPE_SUM:
-            sum_pool.apply_async(task_sum, args=(task['start'], task['end']), callback=sum_return)
+            sum_pool.apply_async(task_sum, args=(task['start'], task['end']), callback=result_sums.append)
         elif task_type == TYPE_NAME:
-            name_pool.apply_async(task_name, args=(task['url'],), callback=name_return)
+            name_pool.apply_async(task_name, args=(task['url'],), callback=result_names.append)
         else:
             log.write(f'Error: unknown task type {task_type}')
 
