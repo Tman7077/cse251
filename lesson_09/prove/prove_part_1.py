@@ -11,6 +11,12 @@ Instructions:
 - Do not create classes for this assignment, just functions.
 - Do not use any other Python modules other than the ones included.
 - Complete any TODO comments.
+
+Justification for grade:
+The solve_path function implements a recursive call to ensure that
+the correct path is eventually found. When it reaches a path that is no longer valid,
+it successfully backtracks and maintains both the backtracked path (colors them as visited)
+and the path that is still being explored, which will eventually get to the end of the maze.
 """
 
 import math

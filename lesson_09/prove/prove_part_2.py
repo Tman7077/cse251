@@ -21,12 +21,28 @@ position:
 
 What would be your strategy?
 
-<Answer here>
+If I were to attempt to display the path that got to the solution,
+I would probably reuse some of the logic from the first part of the prove.
+Then, once that path has been found, I would instruct the main thread to
+always follow that path, and then once it reached a fork in the road,
+it would spawn new threads to explore the other paths. This way, the main
+thread would always be following the correct path, and the other threads
+would be exploring the other paths.
 
 Why would it work?
 
-<Answer here>
+Because the main thread would already know which directions to go,
+it could always take the 'correct' path. Spawning the other threads
+would be relatively useless, but maintain the relative functionality
+of spawning new threads at forks, even though technically we know
+they would be useless in the end.
 
+Justification for grade:
+The solve_find_end function successfully finds the end of the maze using
+recursive threading. It spawns new threads for each possible move at a fork,
+while maintaining the thread that reached a fork first. It then continues
+to explore the maze until the end is found. The program also correctly
+displays the number of drawing commands and the number of threads created.
 """
 
 import math
