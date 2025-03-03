@@ -2,7 +2,7 @@
 Course: CSE 251 
 Lesson: L09 Prove Part 2
 File:   prove_part_2.py
-Author: <Add name here>
+Author: <Tyler Bartle>
 
 Purpose: Part 2 of prove 9, finding the path to the end of a maze using recursion.
 
@@ -80,13 +80,71 @@ def get_color():
 
 # TODO: Add any function(s) you need, if any, here.
 
-
 def solve_find_end(maze):
     """ Finds the end position using threads. Nothing is returned. """
-    # When one of the threads finds the end position, stop all of them.
-    global stop
-    stop = False
+    global thread_count
+    visited = set()
+    threads = []
+    visited_lock = threading.Lock()
+    stop_event = threading.Event()
+    stop_event.clear()
+    thread_count = 0
 
+    def _solve(maze, pos, color):
+        global thread_count
+        nonlocal visited
+        nonlocal visited_lock
+        nonlocal threads
+        nonlocal stop_event
+
+        # If the end has been found, return
+        if stop_event.is_set():
+            return
+
+        # If the position has already been visited, return
+        with visited_lock:
+            if pos in visited:
+                return
+            visited.add(pos)  # Mark current position as visited
+
+        maze.move(*pos, color)
+
+        if maze.at_end(*pos):
+            stop_event.set()
+            return
+
+        possible = maze.get_possible_moves(*pos)
+        if not possible:
+            return
+
+        # If there is more than one move, spawn new threads for the extras
+        if len(possible) > 1:
+            for move in possible[1:]:
+                if stop_event.is_set():
+                    return
+                t = threading.Thread(target=_solve, args=(maze, move, get_color()))
+                thread_count += 1
+                threads.append(t)
+                t.start()
+            _solve(maze, possible[0], color)
+            return
+        else:
+            _solve(maze, possible[0], color)
+            return
+
+    start = maze.get_start_pos()
+    t1 = threading.Thread(target=_solve, args=(maze, start, get_color()))
+    threads.append(t1)
+    t1.start()
+
+    prev_len = -1
+    while True:
+        for t in threads:
+            if t.is_alive():
+                t.join(timeout=0.01)
+        if len(threads) == prev_len and not any(t.is_alive() for t in threads):
+            break
+        prev_len = len(threads)
 
 
 

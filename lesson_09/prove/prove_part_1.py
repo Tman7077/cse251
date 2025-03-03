@@ -2,7 +2,7 @@
 Course: CSE 251 
 Lesson: L09 Prove Part 1
 File:   prove_part_1.py
-Author: <Add name here>
+Author: <Tyler Bartle>
 
 Purpose: Part 1 of prove 9, finding the path to the end of a maze using recursion.
 
@@ -34,10 +34,30 @@ def solve_path(maze):
     """ Solve the maze and return the path found between the start and end positions.  
         The path is a list of positions, (x, y) """
     path = []
+    visited = set()
     # TODO: Solve the maze recursively while tracking the correct path.
-
     # Hint: You can create an inner function to do the recursion
+    def _solve(pos):
+        if pos in visited:
+            return False
+        visited.add(pos)
+        path.append(pos)
 
+        maze.move(pos[0], pos[1], (0, 0, 255))
+
+        if maze.at_end(*pos):
+            return True
+
+        for move in maze.get_possible_moves(*pos):
+            if _solve(move):
+                return True
+
+        last = path.pop()
+        maze.restore(last[0], last[1])
+        return False
+    
+    start = maze.get_start_pos()
+    _solve(start)
     return path
 
 
