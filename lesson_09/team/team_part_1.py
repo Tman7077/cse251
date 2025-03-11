@@ -65,13 +65,46 @@ import threading
 
 PHILOSOPHERS = 5
 MAX_MEALS_EATEN = PHILOSOPHERS * 5 # NOTE: Total meals to be eaten, not per philosopher!
+total_meals_eaten = 0
+
+def philosopher(forks, tmel):
+    global total_meals_eaten
+    me = 0
+    while total_meals_eaten < MAX_MEALS_EATEN:
+        if forks[0].acquire(timeout=1):
+            if forks[1].acquire(timeout=1):
+                print(f'Philosopher {threading.current_thread().name} is eating.')
+                time.sleep(random.randint(1, 3))
+                with tmel:
+                    total_meals_eaten += 1
+                me += 1
+                forks[1].release()
+            forks[0].release()
+        print(f'Philosopher {threading.current_thread().name} is thinking.')
+        time.sleep(random.randint(1, 3))
+    return me
 
 def main():
     # TODO - Create the forks.
+    forks = []
+    for _ in range(PHILOSOPHERS):
+        forks.append(threading.Lock())
+
+    global total_meals_eaten
+    total_meals_eaten_lock = threading.Lock()
     # TODO - Create PHILOSOPHERS philosophers.
+    philosophers = []
+    for i in range(PHILOSOPHERS):
+        philosophers.append(threading.Thread(target=philosopher, args=([forks[i], forks[i + 1] if len(forks) > i + 1 else forks[0]], total_meals_eaten_lock)))
     # TODO - Start them eating and thinking.
+    for phil in philosophers:
+        phil.start()
     # TODO - Display how many times each philosopher ate.
-    pass
+    meals_per = []
+    for phil in philosophers:
+        meals_per.append(phil.join())
+    for i in range(len(meals_per)):
+        print(f'Philosopher {i + 1} ate {meals_per[i]} times.')
 
 
 if __name__ == '__main__':
