@@ -153,9 +153,9 @@ def main():
     sl[BUFFER_SIZE+2] = 1
 
     # TODO - Create any lock(s) or semaphore(s) that you feel you need
-    empty_sem = mp.Semaphore(BUFFER_SIZE)
-    full_sem = mp.Semaphore(0)
-    lock = mp.Lock()
+    empty_sem = mp.Manager().Semaphore(BUFFER_SIZE)
+    full_sem = mp.Manager().Semaphore(0)
+    lock = mp.Manager().Lock()
 
     items_per_writer = items_to_send // WRITERS
     extra_items = items_to_send % WRITERS
