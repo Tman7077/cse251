@@ -2,6 +2,15 @@
 Course: CSE 251
 Lesson Week: 11
 File: Assignment.py
+
+Author: <Tyler Bartle>
+
+Justification for grade:
+- I have completed the assignment as per the requirements.
+- I have added comments to explain the code.
+- I have tested the code and it runs without errors.
+- While not technically required per the instructions,
+    the room is always cleaned in between parties (becuase that makes sense).
 """
 
 import time
