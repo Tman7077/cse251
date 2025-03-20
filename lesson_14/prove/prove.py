@@ -2,7 +2,7 @@
 Course: CSE 251
 Lesson Week: 14
 File: assignment.py
-Author: <your name>
+Author: <Tyler Bartle>
 Purpose: Assignment 14 - Family Search
 """
 import time
@@ -30,7 +30,7 @@ def run_part(log, start_id, generations, title, func):
     log.write('#' * 45)
     log.start_timer(f'{title}: {generations} generations')
     log.write('#' * 45)
-    func(start_id, tree)
+    func(start_id, tree, generations)
     total_time = log.stop_timer()
 
     req = Request_thread(f'{TOP_API_URL}/end')
