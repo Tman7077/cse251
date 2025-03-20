@@ -45,26 +45,198 @@ import multiprocessing as mp
 
 # -------------------------------------------------------------------
 class Queue_t:
-    pass
+    def __init__(self):
+        self.queue = []
+        self.lock = threading.Lock()
+
+    def size(self):
+        with self.lock:
+            return len(self.queue)
+
+    def get(self):
+        with self.lock:
+            if self.queue:
+                return self.queue.pop(0)
+            return None
+
+    def put(self, item):
+        with self.lock:
+            self.queue.append(item)
 
 
 # -------------------------------------------------------------------
 class Stack_t:
-    pass
+    def __init__(self):
+        self.stack = []
+        self.lock = threading.Lock()
+
+    def push(self, item):
+        with self.lock:
+            self.stack.append(item)
+
+    def pop(self):
+        with self.lock:
+            if self.stack:
+                return self.stack.pop()
+            return None
 
 
 # -------------------------------------------------------------------
 class Queue_p:
-    pass
+    def __init__(self):
+        self.queue = mp.Manager().list()
+
+    def size(self):
+        return len(self.queue)
+
+    def get(self):
+        if self.queue:
+            return self.queue.pop(0)
+        return None
+
+    def put(self, item):
+        self.queue.append(item)
 
 
 # -------------------------------------------------------------------
 class Stack_p:
-    pass
+    def __init__(self):
+        self.stack = mp.Manager().list()
+
+    def push(self, item):
+        self.stack.append(item)
+
+    def pop(self):
+        if self.stack:
+            return self.stack.pop()
+        return None
+
+
+def test_queue_t():
+    queue = Queue_t()
+
+    def producer():
+        for i in range(10):
+            queue.put(i)
+            time.sleep(0.01)
+
+    def consumer():
+        for _ in range(10):
+            item = queue.get()
+            print(f"Queue_t Consumer got: {item}")
+            time.sleep(0.02)
+
+    threads = []
+    for _ in range(2):
+        t = threading.Thread(target=producer)
+        threads.append(t)
+        t.start()
+
+    for _ in range(2):
+        t = threading.Thread(target=consumer)
+        threads.append(t)
+        t.start()
+
+    for t in threads:
+        t.join()
+
+
+def test_stack_t():
+    stack = Stack_t()
+
+    def producer():
+        for i in range(10):
+            stack.push(i)
+            time.sleep(0.01)
+
+    def consumer():
+        for _ in range(10):
+            item = stack.pop()
+            print(f"Stack_t Consumer got: {item}")
+            time.sleep(0.02)
+
+    threads = []
+    for _ in range(2):
+        t = threading.Thread(target=producer)
+        threads.append(t)
+        t.start()
+
+    for _ in range(2):
+        t = threading.Thread(target=consumer)
+        threads.append(t)
+        t.start()
+
+    for t in threads:
+        t.join()
+
+
+def test_queue_p():
+    queue = Queue_p()
+
+    def producer():
+        for i in range(10):
+            queue.put(i)
+            time.sleep(0.01)
+
+    def consumer():
+        for _ in range(10):
+            item = queue.get()
+            print(f"Queue_p Consumer got: {item}")
+            time.sleep(0.02)
+
+    processes = []
+    for _ in range(2):
+        p = mp.Process(target=producer)
+        processes.append(p)
+        p.start()
+
+    for _ in range(2):
+        p = mp.Process(target=consumer)
+        processes.append(p)
+        p.start()
+
+    for p in processes:
+        p.join()
+
+
+def test_stack_p():
+    stack = Stack_p()
+
+    def producer():
+        for i in range(10):
+            stack.push(i)
+            time.sleep(0.01)
+
+    def consumer():
+        for _ in range(10):
+            item = stack.pop()
+            print(f"Stack_p Consumer got: {item}")
+            time.sleep(0.02)
+
+    processes = []
+    for _ in range(2):
+        p = mp.Process(target=producer)
+        processes.append(p)
+        p.start()
+
+    for _ in range(2):
+        p = mp.Process(target=consumer)
+        processes.append(p)
+        p.start()
+
+    for p in processes:
+        p.join()
 
 
 def main():
-    pass
+    print("Testing Queue_t with threads")
+    test_queue_t()
+    print("\nTesting Stack_t with threads")
+    test_stack_t()
+    print("\nTesting Queue_p with processes")
+    test_queue_p()
+    print("\nTesting Stack_p with processes")
+    test_stack_p()
 
 
 if __name__ == '__main__':
