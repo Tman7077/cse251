@@ -1,4 +1,6 @@
-/* ---------------------------------------
+/*
+	---------------------------------------
+
 Course: CSE 251
 Lesson Week: ?12
 File: team.go
@@ -20,7 +22,8 @@ readValue()
 This goroutine will display the contents of the channel containing
 the prime numbers
 
---------------------------------------- */
+---------------------------------------
+*/
 package main
 
 import (
@@ -51,12 +54,21 @@ func isPrime(n int) bool {
 	return true
 }
 
-func worker() {
+func worker(numbers <-chan int, primes chan<- int, done chan<- bool) {
 	// TODO - process numbers on one channel and place prime number on another
+	for num := range numbers {
+		if isPrime(num) {
+			primes <- num
+		}
+	}
+	done <- true
 }
 
-func readValues() {
+func readValues(primes <-chan int) {
 	// TODO -Display prime numbers from a channel
+	for prime := range primes {
+		fmt.Println(prime)
+	}
 }
 
 func main() {
@@ -67,17 +79,28 @@ func main() {
 	// Create any channels that you need
 	// Create any other "things" that you need to get the workers to finish(join)
 
+	numbers := make(chan int, numberValues)
+	primes := make(chan int, numberValues)
+	done := make(chan bool, workers)
+
 	// create workers
 	for w := 1; w <= workers; w++ {
-		go worker() // Add any arguments
+		go worker(numbers, primes, done) // Add any arguments
 	}
 
 	rand.Seed(time.Now().UnixNano())
 	for i := 0; i < numberValues; i++ {
 		// ch <- rand.Int()
+		numbers <- rand.Int()
 	}
+	close(numbers)
 
-	go readValues() // Add any arguments
+	go readValues(primes) // Add any arguments
+
+	for w := 1; w <= workers; w++ {
+		<-done
+	}
+	close(primes)
 
 	fmt.Println("All Done!")
 }
