@@ -82,7 +82,7 @@ from common import *
 import queue
 
 # -----------------------------------------------------------------------------
-def depth_fs_pedigree(family_id, tree, generations):
+def depth_fs_pedigree(family_id, tree):
     """
     Performs a depth-first search to build the pedigree tree using threads for concurrency.
     Uses recursion to fetch family and person data concurrently, speeding up the process.
@@ -94,13 +94,13 @@ def depth_fs_pedigree(family_id, tree, generations):
     # Lock to ensure thread-safe updates to shared data structures.
     lock = threading.Lock()
 
-    def process_family(current_family_id, current_generation):
+    def process_family(current_family_id):
         """
         Recursively processes a family and its associated persons (husband, wife, and children).
         Spawns threads for each API call to retrieve family and person information.
         """
-        # Base case: if we've reached the maximum generation, return.
-        if current_generation >= generations:
+        # Terminate if the family id is invalid.
+        if not current_family_id:
             return
         # Check if the current family has already been processed.
         with lock:
@@ -128,7 +128,7 @@ def depth_fs_pedigree(family_id, tree, generations):
                 else:
                     husband_id = None
             if husband_id:
-                t = threading.Thread(target=process_person, args=(husband_id, current_generation))
+                t = threading.Thread(target=process_person, args=(husband_id,))
                 threads.append(t)
                 t.start()
         # Process wife concurrently.
@@ -140,7 +140,7 @@ def depth_fs_pedigree(family_id, tree, generations):
                 else:
                     wife_id = None
             if wife_id:
-                t = threading.Thread(target=process_person, args=(wife_id, current_generation))
+                t = threading.Thread(target=process_person, args=(wife_id,))
                 threads.append(t)
                 t.start()
         # Process each child concurrently.
@@ -150,18 +150,21 @@ def depth_fs_pedigree(family_id, tree, generations):
                     visited_people.add(child_id)
                 else:
                     continue
-            t = threading.Thread(target=process_person, args=(child_id, current_generation))
+            t = threading.Thread(target=process_person, args=(child_id,))
             threads.append(t)
             t.start()
         # Wait for all spawned threads to finish.
         for t in threads:
             t.join()
 
-    def process_person(person_id, current_generation):
+    def process_person(person_id):
         """
         Retrieves a person's data from the server, adds them to the tree, and
         determines the next family to process (based on parent or family id).
         """
+        # Terminate if the person id is invalid.
+        if not person_id:
+            return
         # Retrieve person data.
         person_req = Request_thread(f'{TOP_API_URL}/person/{person_id}')
         person_req.start()
@@ -175,13 +178,13 @@ def depth_fs_pedigree(family_id, tree, generations):
         # Determine the next family to process: use parent's id if available, otherwise use family id.
         next_family_id = person.get_parentid() if person.get_parentid() else person.get_familyid()
         if next_family_id:
-            process_family(next_family_id, current_generation + 1)
+            process_family(next_family_id)
 
     # Begin the recursive depth-first search from the starting family.
-    process_family(family_id, 0)
+    process_family(family_id)
 
 # -----------------------------------------------------------------------------
-def breadth_fs_pedigree(family_id, tree, generations):
+def breadth_fs_pedigree(family_id, tree):
     """
     Performs a breadth-first search to build the pedigree tree using threads.
     Processes each generation concurrently.
@@ -190,11 +193,14 @@ def breadth_fs_pedigree(family_id, tree, generations):
     visited_people = set()
     lock = threading.Lock()
 
-    def process_family_bfs(fam_id, current_generation, next_level_list):
+    def process_family_bfs(fam_id, next_level_list):
         """
         Retrieves a family's data, adds it to the tree, and processes associated persons.
         Enqueues the next generation's family IDs into next_level_list.
         """
+        # Terminate if the family id is invalid.
+        if not fam_id:
+            return
         # Retrieve family data.
         fam_req = Request_thread(f'{TOP_API_URL}/family/{fam_id}')
         fam_req.start()
@@ -210,6 +216,10 @@ def breadth_fs_pedigree(family_id, tree, generations):
             Retrieves a person's data, adds them to the tree, and enqueues the next family id.
             For parents (husband, wife), uses parent id; for children, uses family id.
             """
+            # Terminate if the person id is invalid.
+            if not person_id:
+                return
+            # Retrieve person data.
             person_req = Request_thread(f'{TOP_API_URL}/person/{person_id}')
             person_req.start()
             person_req.join()
@@ -222,17 +232,17 @@ def breadth_fs_pedigree(family_id, tree, generations):
                 if next_fam:
                     with lock:
                         if next_fam not in visited_families:
-                            next_level_list.append((next_fam, current_generation + 1))
+                            next_level_list.append((next_fam))
         local_threads = []
         # Process husband and wife concurrently.
-        for person_id, _ in [(family.get_husband(), True), (family.get_wife(), True)]:
+        for person_id in [family.get_husband(), family.get_wife()]:
             if person_id:
                 with lock:
                     if person_id not in visited_people:
                         visited_people.add(person_id)
                     else:
                         continue
-                t = threading.Thread(target=process_and_enqueue, args=(person_id, True))
+                t = threading.Thread(target=process_and_enqueue, args=(person_id,))
                 local_threads.append(t)
                 t.start()
         # Process each child concurrently.
@@ -242,7 +252,7 @@ def breadth_fs_pedigree(family_id, tree, generations):
                     visited_people.add(child_id)
                 else:
                     continue
-            t = threading.Thread(target=process_and_enqueue, args=(child_id, False))
+            t = threading.Thread(target=process_and_enqueue, args=(child_id,))
             local_threads.append(t)
             t.start()
         # Wait for all person-processing threads to complete.
@@ -250,19 +260,17 @@ def breadth_fs_pedigree(family_id, tree, generations):
             t.join()
     
     # Initialize BFS with the starting family and generation 0.
-    current_level = [(family_id, 0)]
+    current_level = [family_id]
     while current_level:
         next_level = []
         threads = []
         # Process all families in the current generation concurrently.
-        for current_family_id, current_generation in current_level:
-            if current_generation >= generations:
-                continue
+        for fam_id in current_level:
             with lock:
-                if current_family_id in visited_families:
+                if fam_id in visited_families:
                     continue
-                visited_families.add(current_family_id)
-            t = threading.Thread(target=process_family_bfs, args=(current_family_id, current_generation, next_level))
+                visited_families.add(fam_id)
+            t = threading.Thread(target=process_family_bfs, args=(fam_id, next_level))
             threads.append(t)
             t.start()
         # Wait for all threads in the current generation to finish.
@@ -272,7 +280,7 @@ def breadth_fs_pedigree(family_id, tree, generations):
         current_level = next_level
 
 # -----------------------------------------------------------------------------
-def breadth_fs_pedigree_limit5(family_id, tree, generations):
+def breadth_fs_pedigree_limit5(family_id, tree):
     """
     Performs a breadth-first search with a limit of 5 concurrent API calls.
     Uses a semaphore to restrict the number of simultaneous connections to the server.
@@ -283,106 +291,103 @@ def breadth_fs_pedigree_limit5(family_id, tree, generations):
     # Semaphore to limit the number of concurrent API calls to 5.
     sem = threading.Semaphore(5)
 
-    # Starting list for the BFS: each element is a tuple (family_id, current_generation)
-    current_level = [(family_id, 0)]
+    def process_family_bfs(fam_id, next_level_list):
+        """
+        Retrieves a family's data using the semaphore to limit concurrency.
+        Processes associated persons and enqueues next generation family IDs.
+        """
+        if not fam_id:
+            return
+        # Acquire semaphore before making the family API call.
+        sem.acquire()
+        family_req = Request_thread(f'{TOP_API_URL}/family/{fam_id}')
+        family_req.start()
+        family_req.join()
+        # Release semaphore after the API call completes.
+        sem.release()
+
+        fam_data = family_req.get_response()
+        if not fam_data:
+            return
+
+        family = Family(fam_data)
+        tree.add_family(family)
+
+        local_threads = []
+
+        def process_person(person_id, is_parent):
+            """
+            Retrieves a person's data using semaphore control and enqueues the next family ID.
+            """
+            sem.acquire()
+            person_req = Request_thread(f'{TOP_API_URL}/person/{person_id}')
+            person_req.start()
+            person_req.join()
+            sem.release()
+
+            person_data = person_req.get_response()
+            if person_data:
+                person = Person(person_data)
+                tree.add_person(person)
+                # Decide which family id to process next based on whether the person is a parent or a child.
+                next_id = person.get_parentid() if is_parent else person.get_familyid()
+                if next_id:
+                    with lock:
+                        if next_id not in visited_families:
+                            next_level.append(next_id)
+        
+        # Process husband concurrently.
+        husband_id = family.get_husband()
+        if husband_id:
+            with lock:
+                if husband_id not in visited_people:
+                    visited_people.add(husband_id)
+                else:
+                    husband_id = None
+            if husband_id:
+                t = threading.Thread(target=process_person, args=(husband_id, True))
+                local_threads.append(t)
+                t.start()
+        # Process wife concurrently.
+        wife_id = family.get_wife()
+        if wife_id:
+            with lock:
+                if wife_id not in visited_people:
+                    visited_people.add(wife_id)
+                else:
+                    wife_id = None
+            if wife_id:
+                t = threading.Thread(target=process_person, args=(wife_id, True))
+                local_threads.append(t)
+                t.start()
+        # Process each child concurrently.
+        for child_id in family.get_children():
+            with lock:
+                if child_id in visited_people:
+                    continue
+                visited_people.add(child_id)
+            t = threading.Thread(target=process_person, args=(child_id, False))
+            local_threads.append(t)
+            t.start()
+
+        for t in local_threads:
+            t.join()
+
+    # Process all families at the current generation concurrently.
+    current_level = [family_id]
     while current_level:
         next_level = []
         threads = []
-
-        def process_family_bfs(fam_id, current_generation):
-            """
-            Retrieves a family's data using the semaphore to limit concurrency.
-            Processes associated persons and enqueues next generation family IDs.
-            """
-            # Acquire semaphore before making the family API call.
-            sem.acquire()
-            family_req = Request_thread(f'{TOP_API_URL}/family/{fam_id}')
-            family_req.start()
-            family_req.join()
-            # Release semaphore after the API call completes.
-            sem.release()
-
-            fam_data = family_req.get_response()
-            if not fam_data:
-                return
-
-            family = Family(fam_data)
-            tree.add_family(family)
-
-            local_threads = []
-
-            def process_person(person_id, is_parent):
-                """
-                Retrieves a person's data using semaphore control and enqueues the next family ID.
-                """
-                sem.acquire()
-                person_req = Request_thread(f'{TOP_API_URL}/person/{person_id}')
-                person_req.start()
-                person_req.join()
-                sem.release()
-
-                person_data = person_req.get_response()
-                if person_data:
-                    person = Person(person_data)
-                    tree.add_person(person)
-                    # Decide which family id to process next based on whether the person is a parent or a child.
-                    next_id = person.get_parentid() if is_parent else person.get_familyid()
-                    if next_id:
-                        with lock:
-                            if next_id not in visited_families:
-                                next_level.append((next_id, current_generation + 1))
-            
-            # Process husband concurrently.
-            husband_id = family.get_husband()
-            if husband_id:
-                with lock:
-                    if husband_id not in visited_people:
-                        visited_people.add(husband_id)
-                    else:
-                        husband_id = None
-                if husband_id:
-                    t = threading.Thread(target=process_person, args=(husband_id, True))
-                    local_threads.append(t)
-                    t.start()
-            # Process wife concurrently.
-            wife_id = family.get_wife()
-            if wife_id:
-                with lock:
-                    if wife_id not in visited_people:
-                        visited_people.add(wife_id)
-                    else:
-                        wife_id = None
-                if wife_id:
-                    t = threading.Thread(target=process_person, args=(wife_id, True))
-                    local_threads.append(t)
-                    t.start()
-            # Process each child concurrently.
-            for child_id in family.get_children():
-                with lock:
-                    if child_id in visited_people:
-                        continue
-                    visited_people.add(child_id)
-                t = threading.Thread(target=process_person, args=(child_id, False))
-                local_threads.append(t)
-                t.start()
-
-            for t in local_threads:
-                t.join()
-
-        # Process all families at the current generation concurrently.
-        for fam_id, current_generation in current_level:
-            if current_generation >= generations:
-                continue
+        for fam_id in current_level:
             with lock:
                 if fam_id in visited_families:
                     continue
                 visited_families.add(fam_id)
-            t = threading.Thread(target=process_family_bfs, args=(fam_id, current_generation))
+            t = threading.Thread(target=process_family_bfs, args=(fam_id, next_level))
             threads.append(t)
             t.start()
-
         for t in threads:
             t.join()
 
-        # Move to the next generation.
+        # Move on to the next generation.
         current_level = next_level
